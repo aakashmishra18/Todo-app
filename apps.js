@@ -1,117 +1,166 @@
-const input=document.getElementById("taskinput");
-const button=document.getElementById("addtask")
+const input = document.getElementById("taskinput");
+const button = document.getElementById("addtask");
 
-const tasklist=document.getElementById("tasklist")
-const remainTask=document.getElementById("remain")
+const tasklist = document.getElementById("tasklist");
+const remainTask = document.getElementById("remain");
 
+const all = document.getElementById("all");
+const comp = document.getElementById("comp");
+const pending = document.getElementById("pending");
 
-const all=document.getElementById("all")
-const comp=document.getElementById("comp")
-const pending=document.getElementById("pending")
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 
-all.addEventListener("click",()=>{
-    const tasks=document.querySelectorAll("#tasklist li")
+function saveTasks() {
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+}
 
-    tasks.forEach((task)=>{
-        task.style.display="list-item"
-    })
-})
+function updateCount() {
+    const remaining = tasks.filter(task => !task.completed).length;
+    remainTask.textContent = `Remaining Tasks: ${remaining}`;
+}
 
-pending.addEventListener("click",()=>{
-    const tasks=document.querySelectorAll("#tasklist li")
+function createTaskElement(taskObj, index) {
 
-    tasks.forEach((task)=>{
-        if(task.classList.contains("completed")){
-            task.style.display="none"
-        }else{
-            task.style.display="list-item"
-        }
-    })
-})
+    const li = document.createElement("li");
 
-comp.addEventListener("click",()=>{
-   const tasks=document.querySelectorAll("#tasklist li")
-   tasks.forEach((task)=>{
-    if(task.classList.contains("completed")){
-        task.style.display="list-item"
-    }else{
-        task.style.display="none"
+    if (taskObj.completed) {
+        li.classList.add("completed");
     }
-   })
-})
 
+    const span = document.createElement("span");
+    span.textContent = taskObj.text;
+    li.appendChild(span);
 
-
-let count =0;
-
-button.addEventListener("click",()=>{
-    const li= document.createElement("li");
-    tasklist.appendChild(li);
-
-    const task =document.createElement("span")
-    task.textContent=input.value
-    li.appendChild(task);
-
-    input.value=""
-
-    const dlt=document.createElement("button")
-    dlt.textContent="delete"
+    const dlt = document.createElement("button");
+    dlt.textContent = "Delete";
     li.appendChild(dlt);
 
-    const compcheck=document.createElement("input")
-    compcheck.type="checkbox";
+    const compcheck = document.createElement("input");
+    compcheck.type = "checkbox";
+    compcheck.checked = taskObj.completed;
     li.appendChild(compcheck);
 
-    const editbtn=document.createElement("button");
-    editbtn.textContent="Edit"
+    const editbtn = document.createElement("button");
+    editbtn.textContent = "Edit";
     li.appendChild(editbtn);
 
-    count++;
-    updatecount();
-    let currentele=task;
+    let currentElement = span;
 
-    editbtn.addEventListener("click",()=>{
-        if(editbtn.textContent==="Edit"){
-            const editinput=document.createElement("input")
-            editinput.value=currentele.textContent;
-            currentele.replaceWith(editinput)
+    editbtn.addEventListener("click", () => {
 
-            currentele=editinput;
-            editbtn.textContent='save';
+        if (editbtn.textContent === "Edit") {
 
+            const editinput = document.createElement("input");
+            editinput.value = currentElement.textContent;
+
+            currentElement.replaceWith(editinput);
+
+            currentElement = editinput;
+
+            editbtn.textContent = "Save";
+
+        } else {
+
+            const newspan = document.createElement("span");
+            newspan.textContent = currentElement.value;
+
+            tasks[index].text = currentElement.value;
+
+            saveTasks();
+
+            currentElement.replaceWith(newspan);
+
+            currentElement = newspan;
+
+            editbtn.textContent = "Edit";
         }
-        else{
-            const newspan=document.createElement("span")
-            newspan.textContent = currentele.value
-            currentele.replaceWith(newspan)
 
-            currentele=newspan;
+    });
 
-            editbtn.textContent='Edit';
+    compcheck.addEventListener("change", () => {
 
-        }
-    })
-    compcheck.addEventListener("change",()=>{
-        li.classList.toggle("completed")
-        if(compcheck.checked){
-        count--;
-        }else{
-            count++;
-        }
-        updatecount()
-    })
+        li.classList.toggle("completed");
 
-    dlt.addEventListener("click",()=>{
+        tasks[index].completed = compcheck.checked;
+
+        saveTasks();
+        updateCount();
+
+    });
+
+    dlt.addEventListener("click", () => {
+
         li.remove();
-        if(!compcheck.checked){
-        count--;
-        }
-        updatecount()
-    })
 
+        tasks.splice(index, 1);
 
-})
+        saveTasks();
+        updateCount();
 
-function updatecount(){
-    remainTask.textContent=`Remianing task:${count}`;
+        location.reload();
+    });
+
+    tasklist.appendChild(li);
 }
+
+button.addEventListener("click", () => {
+
+    const text = input.value.trim();
+
+    if (text === "") return;
+
+    const taskObj = {
+        text: text,
+        completed: false
+    };
+
+    tasks.push(taskObj);
+
+    saveTasks();
+
+    input.value = "";
+
+    location.reload();
+});
+
+tasks.forEach((task, index) => {
+    createTaskElement(task, index);
+});
+
+updateCount();
+
+all.addEventListener("click", () => {
+
+    document.querySelectorAll("#tasklist li").forEach(task => {
+        task.style.display = "list-item";
+    });
+
+});
+
+comp.addEventListener("click", () => {
+
+    document.querySelectorAll("#tasklist li").forEach(task => {
+
+        if (task.classList.contains("completed")) {
+            task.style.display = "list-item";
+        } else {
+            task.style.display = "none";
+        }
+
+    });
+
+});
+
+pending.addEventListener("click", () => {
+
+    document.querySelectorAll("#tasklist li").forEach(task => {
+
+        if (!task.classList.contains("completed")) {
+            task.style.display = "list-item";
+        } else {
+            task.style.display = "none";
+        }
+
+    });
+
+});
